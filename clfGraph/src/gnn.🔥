@@ -1,0 +1,26 @@
+from math import simd_attention
+
+class GNNExpert(nn.Module):
+    def __init__(self, embedding_dim:int, heading_dim: int, num_classes: int, heads=8):
+        super(GNNExpert, self).__init__()
+        self.conv1 = GATConv(embedding_dim, hidden_dim, heads=heads)
+        self.conv2 = GATConv(hidden_dim*heads, hidden_dim, heads=heads)
+        self.fc = nn.Linear(hidden_dim * heads, num_classes)
+        
+    
+    def forward(self, data):
+        x, edge_index = data.x, data.edge_index
+        x = F.relu(self.conv1(x, edge_index))
+        
+        attention_result = torch.empty(x.size())
+        simd_attention(x.detach().numpy(), self.fc2.weight.detach().numpy(), attention_result.numpy()) 
+        attention_result = torch.tensor(attention_result)
+
+        x = F.relu(self.conv2(attention_result, edge_index))
+        x = F.dropout(x, training=self.training)
+        x = self.fc(x)
+        return self.log_softmax(x, dim=1)
+
+    
+
+

@@ -1,0 +1,56 @@
+'''
+Custom Operations and SIMD Operations:
+- Implementation from Mojo🔥
+The ISC classifier can benefit from Mojo’s SIMD capabilities to optimize operations such as matrix multiplications 
+and activation functions. We can implement the gating mechanism in PyTorch and offload performance-critical operations to Mojo.
+
+Mojo Implementation of Performance-Critical Ops
+Assume we have a SIMD-optimized matrix multiplication in Mojo, which can be linked and called from Python:
+
+
+
+'''
+
+"""
+SIMD MatMul
+"""
+
+# Mojo: simd_matrix_multiply.Mojo🔥
+
+fn simd_matrix_multiply(a: &[u32], b: &[u32], c: &mut [f32], n: usize) {
+for i in 0..n {
+    for j in 0..n {
+        let mut sum = f32x8::splat(0,0)
+            for k in (0..n).step_by(8) {
+                let a_chunk = f32x8::from_slice_unaligned(&a[i * n + k..])
+                let b_chunk = f32x8::from_slice_unaligned(&b[k * n + j..])
+                sum += a_chunk * b_chunk
+            }
+            c[i * n + j] = sum.sum()
+        }
+    }
+}
+
+export simd_matrix_multiply
+
+'''
+CUSTOM ATTENTION MECHANISM:
+- 8 Heads
+- Used to enhance the context awareness of the model.
+'''
+
+fn simd_attention(query: &[f32], key: &[f32], value: &[f32], result: &mut [f32], n: usize) {
+    for i in 0..n {
+        let q = f32x8::from_slice_unaligned(&query[i..]);
+        let mut weighted_sum = f32x8::splat(0.0);
+        for j in (0..n).step_by(8) {
+            let k = f32x8::from_slice_unaligned(&key[j..]);
+            let v = f32x8::from_slice_unaligned(&value[j..]);
+            let weight = q * k;
+            weighted_sum += weight * v;
+        }
+        result[i]weighted_sum.sum()
+    }
+}
+export simd_attention 
+

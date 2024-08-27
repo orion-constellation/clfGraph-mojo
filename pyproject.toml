@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "clfgraph"
+version = "0.1.0"
+description = "Experimental architecture combining the best of shallow Neural Networks with Graph Neural Networks. Rust components."
+authors = ["snyata <core@synavate.tech>"]
+license = "Apache-2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+ray = "^2.34.0"
+fastapi = "^0.112.2"
+redis = "^5.0.8"
+types-redis = "^4.6.0.20240819"
+uvicorn = "^0.30.6"
+stix2 = "^3.0.1"
+scikit-learn = "^1.5.1"
+torch = "^2.4.0"
+isort = "^5.13.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
