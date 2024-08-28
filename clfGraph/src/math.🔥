@@ -31,7 +31,7 @@ for i in 0..n {
     }
 }
 
-export simd_matrix_multiply
+
 
 '''
 CUSTOM ATTENTION MECHANISM:
@@ -52,5 +52,6 @@ fn simd_attention(query: &[f32], key: &[f32], value: &[f32], result: &mut [f32],
         result[i]weighted_sum.sum()
     }
 }
-export simd_attention 
+
+    export simd_attention, simd_matrix_multiply
 

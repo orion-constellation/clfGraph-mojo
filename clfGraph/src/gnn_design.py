@@ -1,5 +1,29 @@
-from math import simd_attention
+'''
+Graph Neural Network Components
 
+'''
+import torch
+from torch_geometric.nn import GATConv, GCNConv
+from torch.nn import Module as nn
+from torch.nn import functional as F
+
+class GNNLayer(nn.Module):
+    def __init__(self, input_dim: int, number_of_experts:int):
+        super(GNNLayer, self).__init__()
+        self.gate = MoEGate(input_dim, number_of_experts)
+        self.experts = nn.ModuleList([Expert(input_dim) for _ in range(number_of_experts)])
+
+    def forward(self, x):
+        gate_outputs = self.gate(x)
+        expert_outputs = [expert(x) for expert in self.experts]
+        return torch.sum(torch.stack(expert_outputs) * gate_outputs, dim=0)
+    
+
+'''
+GNN Expert Design:
+- Use after the shared representation is generated once as the first layeer
+
+'''
 class GNNExpert(nn.Module):
     def __init__(self, embedding_dim:int, heading_dim: int, num_classes: int, heads=8):
         super(GNNExpert, self).__init__()
@@ -20,7 +44,4 @@ class GNNExpert(nn.Module):
         x = F.dropout(x, training=self.training)
         x = self.fc(x)
         return self.log_softmax(x, dim=1)
-
-    
-
 
