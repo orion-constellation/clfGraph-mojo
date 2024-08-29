@@ -9,6 +9,12 @@ _int/
 *.env
 **/wandb/
 .pytest_cache
+dist/
+_int/
+poetry.lock
+cargo.lock
+target/
+
 
 # C extensions
 *.so
