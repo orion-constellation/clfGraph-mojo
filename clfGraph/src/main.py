@@ -7,15 +7,19 @@ MoE Model:
 
 '''
 import os
+
 import torch
+
 from torch
-import wandb
-from torch.utils.data import DataLoader, Dataset
-from torch.optim.optimizer import Optimizer, lr_scheduler, Adam, SGD
-from torch.nn import Module as nn
-from clf_design import MoEGate, ExpertGNN
-from utils import create_session_id
 from dataclasses import dataclass
+
+import wandb
+from clf_design import ExpertGNN, MoEGate
+from torch.nn import Module as nn
+from torch.optim.optimizer import SGD, Adam, Optimizer, lr_scheduler
+from torch.utils.data import DataLoader, Dataset
+from utils import create_session_id
+
 
 @dataclass
 class TrainingSession:

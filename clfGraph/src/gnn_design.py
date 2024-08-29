@@ -3,12 +3,11 @@ Graph Neural Network Components
 
 '''
 import torch
-from torch_geometric.nn import GATConv, GCNConv
+# Import from Mojo
+from mojo_math import simd_attention, simd_matrix_multiply
 from torch.nn import Module as nn
 from torch.nn import functional as F
-# Import from Mojo
-from mojo_math import simd_matrix_multiply, simd_attention
-
+from torch_geometric.nn import GATConv, GCNConv
 
 
 class GNNLayer:

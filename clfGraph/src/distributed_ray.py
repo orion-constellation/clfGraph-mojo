@@ -16,11 +16,13 @@ ability to focus on relevant patterns within the cybersecurity data.
 
 '''
 import os
+
+import ray
 import torch
 import torch.distributed as dist
-import ray
-from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.nn.functional as F
+from torch.nn.parallel import DistributedDataParallel as DDP
+
 
 def init_distributed_backend():
     dist.init_process_group(backend='nccl', init_method='env://')

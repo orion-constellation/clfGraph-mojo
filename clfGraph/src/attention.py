@@ -3,11 +3,10 @@ Attention Layers and additional
 
 '''
 import torch
-from torch_geometric.nn import GATConv, GCNConv, GNNLayer
-from torch.nn import Module as nn
-from torch_geometric.utils import add_self_loops, degree
 import torch.nn.functional as F
-
+from torch.nn import Module as nn
+from torch_geometric.nn import GATConv, GCNConv, GNNLayer
+from torch_geometric.utils import add_self_loops, degree
 
 '''Global Graph Attention Layer
 -  Captures information about the entire graph

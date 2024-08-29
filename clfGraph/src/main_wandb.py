@@ -6,12 +6,13 @@
 '''
 
 import os
+from dataclasses import dataclass
+
 import torch
 import wandb
-from torch.utils.data import DataLoader
-from torch import nn, optim
 from dotenv import load_dotenv
-from dataclasses import dataclass
+from torch import nn, optim
+from torch.utils.data import DataLoader
 from utils import create_session_id
 
 

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
-from colorama import Fore, Style
-from datetime import date
 import os
+from datetime import date
+
+from colorama import Fore, Style
 
 SIMPLE_LOG_FORMAT = "[%(asctime)s] %(levelname)s %(message)s"
 DEBUG_LOG_FORMAT = "[%(asctime)s] %(levelname)s %(filename)s:%(lineno)03d  %(message)s"
@@ -11,7 +12,7 @@ LOG_LEVEL = logging.DEBUG
 
 def configure_logging(level: int = LOG_LEVEL) -> None:
     """Configure the native logging module."""
-
+  
     # Auto-adjust default log format based on log level
     log_format = DEBUG_LOG_FORMAT if level == logging.DEBUG else SIMPLE_LOG_FORMAT
 
@@ -31,6 +32,8 @@ def configure_logging(level: int = LOG_LEVEL) -> None:
         format=log_format,
         handlers=[console_handler, file_handler],
     )
+    
+    return logger
 
 
 class FancyConsoleFormatter(logging.Formatter):

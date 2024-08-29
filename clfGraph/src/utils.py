@@ -8,7 +8,8 @@
 
 '''
 import torch
-import torch.nn as nn 
+import torch.nn as nn
+
 
 class SharedRepresentation(nn.Module):
     def __init__(self, input_dim, embedding_dim):

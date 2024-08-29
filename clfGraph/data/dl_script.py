@@ -5,15 +5,15 @@ Download your dataset in parts
 from dataclasses import dataclass
 import requests
 import os
-from src.custom_logging import configure_logging
+from src.custom_logging import logger
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Optional, Union   
+from typing import List, Optional, Union 
+from clfGraph.src.constants import PROJECT_NAME  
 from dotenv import load_dotenv
 load_dotenv() 
 
 ##### SET CONFIG #####
 LOG_LEVEL= os.environ("LOG_LEVEL", "debug")
-logger = configure_logging(LOG_LEVEL)
 
 # List of Files to Download
 # Can call all or this list
@@ -78,6 +78,7 @@ Returns:
 - None
 '''
 def download_chunk_parallel(self, file_list):
+    logger.info("Downloading chunks in parallel")
     for i, file_name in enumerate(self.file_list):
         retries = 3
         while retries < self.max_retries:
@@ -94,7 +95,7 @@ def download_chunk_parallel(self, file_list):
                         retries += 1
                         print(f"Failed to download {file_name}. Retry {retries}/{self.max_retries}. Error: {e}")
             except requests.exceptions.RequestException as e:
-                print(f"Failed to download {file_name}. Error: {e}")
+                logger.error(f"Failed to download {file_name}. Error: {e}")
             if retries == self.max_retries:
                 print(f"Failed to download {file_name} after {self.max_retries} retries.")
 
@@ -107,7 +108,8 @@ Parameters:
 Returns:
 - None
 '''
-def download_all_parallel(self, file_list):
+def download_all_parallel(self, file_list=file_list):
+    logger.info("###Downloading all files from:\n {file_list}")
     total_files = len(file_list)
     def download_all_parallel(self):
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
@@ -120,15 +122,16 @@ def download_all_parallel(self, file_list):
                 try:
                     result = future.result()
                     if result:
-                        print(f"Successfully downloaded {file_name} in parallel.")
+                        logger.info(f"Successfully downloaded {file_name} in parallel.")
                     else:
-                        print(f"Failed to download {file_name} in parallel.")
+                        logger.error(f"Failed to download {file_name} in parallel.")
                 except Exception as e:
-                    print(f"Exception occurred while downloading {file_name}: {e}")
+                    logger.error(f"Exception occurred while downloading {file_name}: {e}")
 
 
 
 DL_TYPE="train"
+dest_folder='./{PROJECT}/raw/'
 
 download_session = DownloadSession(
     project_name="ClfGraph",
@@ -137,16 +140,17 @@ download_session = DownloadSession(
     max_workers=5,
     base_url="http://205.174.165.80/IOTDataset/CICIoMT2024/Dataset/WiFI_and_MQTT/attacks/CSV/train",
     file_list=file_list,
-    destination_folder=dest_folder,
+    dest_folder='./{PROJECT}/raw/',
     chunk_size=3, 
     parallel=True,
     train_test="train"
 )
 
-if os.path.exists(f"../dataset/{project_name}/{download_session.train_test}"):
-    print(f"Folder {project_name}/{download_session.train_test} already exists")
+if os.path.exists(f"../dataset/{PROJECT}/{download_session.train_test}"):
+    logger.info(f"Folder {PROJECT}/{download_session.train_test} already exists")
 else:
-    os.makedirs(f"../dataset/{dest_folder}/{session.train_test}")
+    os.makedirs(f"{download_session.dest_folder}/{download_session.train_test}")
+    logger.info(f"{dest_folder}/{download_session.train_test} created")
 
 
 

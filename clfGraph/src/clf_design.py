@@ -1,9 +1,9 @@
+from math import simd_matrix_multiply
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from math import simd_matrix_multiply
-from torch_geometric.nn import GCNConv, GATConv
-
+from torch_geometric.nn import GATConv, GCNConv
 
 
 class ISCGatingNetwork(nn.Module):
