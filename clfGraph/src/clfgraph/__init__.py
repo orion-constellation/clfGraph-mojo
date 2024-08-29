@@ -1,6 +1,5 @@
 import sentry_sdk
 
-
 sentry_sdk.init(
     dsn="https://d4953e4c6eab9d20a73ea6e0dff1731e@o4507599957786624.ingest.de.sentry.io/4507861198700624",
     enable_tracing=True,

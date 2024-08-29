@@ -3,9 +3,10 @@ from collections import defaultdict
 
 import pandas as pd
 import streamlit as st
-import wandb
-from clfgraph.sklearn_baseline.models import (save_model,
-from clfgraph.test_data import clf_models, cluster_models                                            train_classification_models,
+from clfgraph.sklearn_baseline.models import (clf_models, clfgraph.test_data,
+                                              cluster_models, from, import,
+                                              save_model,
+                                              train_classification_models,
                                               train_clustering_models)
 from sklearn.base import BaseEstimator
 from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans, MeanShift
@@ -15,6 +16,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from tqdm import tqdm
+
+import wandb
 
 # Import the training functions (replace with actual import statements)
 

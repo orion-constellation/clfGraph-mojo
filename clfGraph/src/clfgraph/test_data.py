@@ -1,6 +1,6 @@
-import pandas as pd
 from collections import defaultdict
 
+import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans, MeanShift
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
@@ -10,12 +10,14 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from tqdm import tqdm
 
+
 def test_data():
     data = {
     'Name': ['Alice', 'Bob', 'Charlie', 'David', 'Eva'],
     'Age': [24, 27, 22, 32, 29],
     'City': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'],
-    'Score': [85.5, 90.3, 88.0, 72.5, 91.2]
+    'Score': [85.5, 90.3, 88.0, 72.5, 91.2],
+    'target':[0,1,0,1,0]
     }
 
     df = pd.DataFrame(data)

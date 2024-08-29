@@ -9,22 +9,30 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import List, Optional, Union
 
+import dask as dd
+import ray
 import requests
-import wandb
 from clfgraph.constants import DATA_PATH, PROJECT_NAME
 from clfgraph.custom_logging import configure_logging
-logger=configure_logging(level="DEBUG")
-from dotenv import load_dotenv
-
 from clfgraph.sklearn_baseline.models import init_wandb, params
+from clfgraph.test_data import test_data
+from dotenv import load_dotenv
 from tqdm import tqdm
+import sentry_sdk
+sentry_sdk.init(dsn="")
+
+import wandb
+
+logger=configure_logging(level="DEBUG")
+if logger.level == "DEBUG":
+    test_data = test_data()
 
 logger.info("Logger works")
 
 load_dotenv() 
 
 ##### SET CONFIG #####
-LOG_LEVEL= os.environ(LOG_LEVEL="DEBUG")
+LOG_LEVEL= logger.setLevel("DEBUG")
 DL_TYPE="train"
 DEST_FOLDER=DATA_PATH
 
@@ -72,6 +80,7 @@ Parameters:
 class DownloadSession:
     project_name: str
     base_url: str
+    train_test: Union[str, str]
     file_list: Union[List[str], List[int]]
     dest_folder: str
     dataset_name: str
@@ -79,7 +88,7 @@ class DownloadSession:
     chunk_size: int = 3
     max_retries: int = 3
     parallel: bool = True
-    train_test: Union[str, str]
+    
     
 
 
@@ -96,12 +105,13 @@ download_session = DownloadSession(
     parallel=True,
     train_test="train"
 )
-
-if os.path.exists(f".{DATA_PATH}/{download_session.train_test}"):
-    logger.info(f"Folder {PROJECT_NAME}/{download_session.train_test} already exists")
+wandb.config=params
+dataset_path="data/dataset/train/"
+if os.path.exists(f"{dataset_path}{download_session.train_test}"):
+    logger.info(f"{dataset_path}{download_session.train_test} already exists")
 else:
-    os.makedirs(f"{DATA_PATH}/{download_session.train_test}")
-    logger.info(f"{download_session.dest_folder}/{download_session.train_test} created")
+    os.makedirs(f"{dataset_path}{download_session.train_test}")
+    logger.info(f"{dataset_path}{download_session.train_test} created")
 
 
 '''
@@ -114,8 +124,10 @@ Returns:
 - None
 '''
 def download_chunk_parallel(self, dl_session=download_session):
-    init_wandb(project=PROJECT_NAME, config=params, name=f"downloading_dataset: {download_session.dataset_name}", job_type="dataset")
+    chunk_run = init_wandb(project=PROJECT_NAME, config=params, name=f"downloading_dataset: {download_session.dataset_name}", job_type="dataset")
     logger.info("Downloading chunks in parallel")
+    logger.info("###Downloading all files from:\n {file_list}")
+    #total_files = len(file_list)
     for i, file_name in tqdm(iterable=enumerate(file_list),colour="green", ascii=True, timeit=True):
         retries = 3
         while retries < dl_session.max_retries:
@@ -130,12 +142,12 @@ def download_chunk_parallel(self, dl_session=download_session):
                         future.result()  # Wait for all downloads to complete
                         
                         retries += 1
-                        logger.error(f"Failed to download {file_name}. Retry {retries}/{self.max_retries}. Error: {e}")
+                        logger.error(f"Failed to download {file_name}. Retry {retries}/{download_session.max_retries}")
             except requests.exceptions.RequestException as e:
                 logger.error(f"Failed to download {file_name}. Error: {e}")
             if retries == dl_session.max_retries:
                 logger.error(f"Failed to download {file_name} after {self.max_retries} retries.")
-    wandb.log(futures)
+    wandb.log({"futures":futures})
 '''
 Download all files at base_url in parallel using ThreadPoolExecutor.
 
@@ -146,9 +158,8 @@ Returns:
 - None
 '''
 
-logger.info("###Downloading all files from:\n {file_list}")
-total_files = len(file_list)
-def download_all_parallel(self):
+
+def download_all_parallel(self, file_names):
     with ThreadPoolExecutor(max_workers=download_session.max_workers) as executor:
         futures = {
             executor.submit(download_all_parallel, file_name): file_name
@@ -171,10 +182,10 @@ def download_all_parallel(self):
 
 
 if __name__ == "__main__":
-    if DL_TYPE=="train" | DL_TYPE=="test":
-        download_session.download_chunk_parallel(file_list)
+    if DL_TYPE=="train":
+        download_chunk_parallel(file_list)
     elif DL_TYPE=="test":
-        download_session.download_chunk_parallel(file_list)
+        download_chunk_parallel(file_list)
     elif DL_TYPE=="all":
         download_session.download_all_parallel(file_list)
     else:

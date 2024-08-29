@@ -9,10 +9,10 @@ from pathlib import Path
 
 import clfgraph.custom_logging
 from clfgraph.constants import __VERSION__, PROJECT_NAME
+from clfgraph.custom_logging import configure_logging
 from datasets import Dataset, DatasetDict
 from dotenv import load_dotenv
 from huggingface_hub import HfApi, Repository, login
-from clfgraph.custom_logging import configure_logging
 
 load_dotenv()
 logger = configure_logging(level="DEBUG")

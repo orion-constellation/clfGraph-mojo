@@ -12,29 +12,31 @@ Using SKLearn models to get a baseline for the task of categorizing data as a th
 '''
 
 import os
-import torch
 from collections import defaultdict
 from datetime import date
 from typing import List, Union
 
+import dask
+import dask.dataframe as dd
 import huggingface_hub
 import matplotlib as plt
+import numpy as np
 import pandas as pd
 import pyarrow as pa
+import ray
 import seaborn as sns
-import numpy as np
 import streamlit as st
-import wandb
+import torch
+
+
 from dotenv import find_dotenv, load_dotenv
 from huggingface_hub import login
 from sklearn.base import BaseEstimator
 
-import ray
-import dask
-from dask.distributed import Client
-import dask.dataframe as dd
+import wandb
 
 load_dotenv("sklearn.env")
+from clfgraph.test_data import test_data_df, clf_models, cluster_models
 from clfgraph.constants import __VERSION__, DATA_PATH, PROJECT_NAME, WANDB_MODE
 from clfgraph.custom_logging import configure_logging
 from clfgraph.hf_hub import upload_to_hf_hub
@@ -42,8 +44,8 @@ from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans, MeanShift
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
-                             precision_score, recall_score, roc_auc_score,
-                             silhouette_score, pairwise_distances_argmin_min)
+                             pairwise_distances_argmin_min, precision_score,
+                             recall_score, roc_auc_score, silhouette_score)
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
@@ -51,8 +53,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from tqdm import tqdm
+from dask import dataframe, datasets
+
 task=("clf", "clustering")
-logger = configure_logging(level = "DEBUG")
+logger = configure_logging(level = "INFO")
 device = "mps" if torch.backends.mps.is_available() else "cpu"
 '''
 Train classification models using the specified classifier models on the provided training and testing data.
@@ -80,7 +84,7 @@ def save_model(project_name=PROJECT_NAME, model_type=Union["clf", "cluster"], ta
     os.makedirs(save_dir, exist_ok=True)
     model_name=model_name
     # Define the file path
-    save_path = os.path.join(save_dir, model_name)
+    
 
 
 params = {
@@ -100,23 +104,24 @@ params = {
     "learning_rate_gradient_boosting": 0.1
 }
 #Init WandB
-def init_wandb(project, config, name):
-        return wandb.init(config, project=PROJECT_NAME, name="clf model training", job_type="model")
+def init_wandb(config, project=PROJECT_NAME, name, job_type="model"):
+        return wandb.init(config, project, name="clf model training", job_type="model")
 
 #@FIXME Do I need this?
-def get_data_df(file_path):
-    df = pd.read_csv(file_path)
-    df_process = df.copy()
+def get_data_df(file_path, test_data=test_data()):
+    #df = pd.read_csv(file_path)
+    df_test = test_data_df()
+    df_process = df_test.copy()
     logger.info("read files in")
     
     # Create feature data frame assuming preprocessing has been completed, and a target.
-    y = df_process.drop('target')
-    X = df.drop('target')
+    y = df_process['target']
+    X = df_test.drop('target', inplace=True)
     
-    return X, y
+    return df, X, y
 
-from clfgraph.test_data import test_data
-test_data = test_data()
+
+df, X, y = get_data_df("./")
 '''
 Train classification data:
 
@@ -129,7 +134,7 @@ returns Data: Dataframe for X, y
 
 '''
 @st.cache_resource
-def train_classification_models(clf_models: defaultdict[str, BaseEstimator], data: pd.DataFrame =test_data, params=params, task = "clf"):
+def train_classification_models(clf_models: defaultdict[str, BaseEstimator], data: pd.DataFrame=df, params=params, task = "clf"):
     task="clf"
     init_wandb(project=PROJECT_NAME, config=params, name="classifier set of training")
     model_name=f"final_v{__VERSION__}_{model_type}_{task}_0x0"
@@ -137,9 +142,9 @@ def train_classification_models(clf_models: defaultdict[str, BaseEstimator], dat
         df_train = pd.read_csv(f"../data/final/{PROJECT_NAME}_train.csv")
         df_test = pd.read_csv(f"../data/final/{PROJECT_NAME}_test.csv")
         #X, y = get_data_df(file_path="../data/dataset/final/CICIoMT2024_final_dataset_0x0.csv")
-    
+        X, y = get_data_df(data)
 
-    X, y = get_data_df(data)
+    
     
     #Log to WandB
     wandb.log({"features": X, "target": y})
@@ -160,7 +165,7 @@ def train_classification_models(clf_models: defaultdict[str, BaseEstimator], dat
         # Initialize W&B with the parameters
         run_name = f"{model_type}_run_{today_str}"
         run_name = wandb.init(project=project_name, name=run_name, config=params)
-        model_name = set_params(model_name=params[name])
+        model_name = model.set_params(model_name=params["name"])
         
         # Update model parameters from the params dictionary if necessary
         if model_type == "SVC":
@@ -234,36 +239,40 @@ def train_classification_models(clf_models: defaultdict[str, BaseEstimator], dat
         wandb.save(results_file)
         wandb.finish()
         return results_df, model
-    
+        test_data = test_data()
 '''Distributed Training'''
-def train_dask_ray(data=data_test, partitions=60, clf_models=clf_models):
+def train_dask_ray(data=test_data, partitions=60, clf_models=clf_models):
     # Initialize Ray
-ray.init()
+    ray.init()
 
-# Start a Dask client with Ray as the scheduler
-client = Client(scheduler="ray")
+    # Start a Dask client with Ray as the scheduler
+    client = Client(scheduler="ray")
 
-# Load a dataset
+    # Load a dataset
+    X, y = test_data()
 
-X, y = test_data()
+    # Convert to Dask DataFrame
+    ddf = dd.from_array(X)
 
-# Convert to Dask DataFrame
-ddf = dd.from_array(X)
+    # Perform a train-test split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Perform a train-test split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Train a scikit-learn model in parallel using Ray
+    @ray.remote
+    def train_model(data, X_train, y_train, model_type="clf",clf_models=clf_models, partitions=60):
+        for _, model in enumerate(clf_models):
+            model.fit(X_train, y_train)
+        
 
-# Train a scikit-learn model in parallel using Ray
-@ray.remote
-def train_model(X_train, y_train, clf_models=clf_models, partitions=60):
-    for _, model in enumerate(clf_models)
-    model.fit(X_train, y_train)
-    return model
-
-# Train the model
-    model_ref = train_model.remote(X_train, y_train)
-    model = ray.get(model_ref)
-
+        # Train the model
+        for model in tqdm(clf_models=clf_models):
+            model_ref = train_model.remote(X_train, y_train)
+            model = ray.get(model_ref) 
+            save_q = input("Do you want to save the mode?")
+            if save_q == "Yes" or "y" or "yes":
+                save_model(PROJECT_NAME, model_type==model, task="clf")
+            return model, model_ref
+#@TODO Finish the remote tranining
 
 '''Train clustering models using the specified cluster models on the provided training data.
 
@@ -276,25 +285,26 @@ Returns:
 None'''
 
 @st.cache_resource
-def train_clustering_models(data, cluster_models: defaultdict[str, BaseEstimator], params=params):
+def train_clustering_models(data, _cluster_models: defaultdict[str, BaseEstimator], params=params):
     task="clustering"
     project= PROJECT_NAME
     model_name=f"test_v{__VERSION__}_{task}_0x0"
     if logger.level != "DEBUG":
         model_name=f"final_v{__VERSION__}_{task}_0x0"
-        df_train = pd.read_csv(f"data/final/{PROJECT_NAME}_train.csv")
-        df_test = pd.read_csv(f"data/final/{PROJECT_NAME}_test.csv")
+        #df_train = pd.read_csv(f"data/final/{PROJECT_NAME}_train.csv")
+        #df_test = pd.read_csv(f"data/final/{PROJECT_NAME}_test.csv")
 
-    wandb.init(config=params, project=PROJECT_NAME, name="cluster model training", job_type="model", config=params)
+    wandb.init(project=PROJECT_NAME, name="cluster model training", job_type="model", config=params)
     wandb.config = params
-    
+    logger.setLevel("INFO")
+    dataset_path="data/dataset/train/"
     if logger.level != "DEBUG":
-        df_train = pd.read_csv(f"../data/final/{PROJECT_NAME}_train.csv")
-        df_test = pd.read_csv(f"../data/final/{PROJECT_NAME}_test.csv")
-        #X, y = get_data_df(file_path="../data/dataset/final/CICIoMT2024_final_dataset_0x0.csv")
-    
+        #df_train = pd.read_csv(f"{dataset_path}/final/{PROJECT_NAME}_train.csv")
+        #df_test = pd.read_csv(f"../data/final/{PROJECT_NAME}_test.csv")
+        #X, y = get_data_df(file_path=f"{dataset_path}final/CICIoMT2024_final_dataset_0x0.csv")
+        X, y = test_data() #get_data_df()
 
-    X, y = get_data_df(data)
+    
     
     if os.path.exists("../data/dataset/final/CICIoMT2024_final_dataset_0x0.csv"):
         X, y = get_data_df(file_path="../data/dataset/final/CICIoMT2024_final_dataset_0x0.csv")
@@ -369,9 +379,18 @@ def train_clustering_models(data, cluster_models: defaultdict[str, BaseEstimator
         # Save the model artifact
         wandb.save(results_file)
         wandb.finish()
-        
-if __name__==__main__():
-    if os.getenv("TASK") == "clf" | "both":
-        train_classification_models(clf_models=clf_models, data=test_data, params=params, task="clf")
+       
+try:
+    if os.getenv("TASK") == "clf":
+        logger.info("Starting clf training")
+        tqdm(train_classification_models(clf_models=clf_models, data=test_data, params=params, task="clf"),desc="clf models training... ", mininterval=0.5, ascii=True)
+    elif os.getenv("TASK")=="cluster":
+        logger.info("Starting cluster training...")
+        tqdm(train_clustering_models(data=test_data,_cluster_models=cluster_models, params=params),desc="starting clustering...", ascii=True, mininterval=0.5, colour="red")
     else: 
-        train_clustering_models 
+        logger.info("Starting clf & cluster cluster training...")
+        logger.info("Clister first...")
+        tqdm(train_clustering_models(data=test_data,_cluster_models=cluster_models, params=params),desc="starting clustering...", ascii=True, mininterval=0.5, colour="red")
+        logger.info("Moving onto clf...")
+except Exception as e:
+    logger.error(e, exc_info=True)
