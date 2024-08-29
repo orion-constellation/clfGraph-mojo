@@ -65,6 +65,24 @@ for i in 0..n {
 
     export simd_attention, simd_matrix_multiply
 
+'''
+SIMD Subgraph Matching:
+- Used to match the subgraph to the expert
+- Used to enhance the context awareness of the model.
+- SIMD is a single calculation type across a vector of data (works similar to pandas)
+
+
+
+'''
+fn simd_subgraph_matching(graph_data: &[f32], pattern_data: &[f32], result: &mut [bool], n: usize) {
+    let graph_chunk = 
+    let subgraph = 
+
+    return sub_graph
+}
+
+
+
 fn main(args, kwargs**) {
     if fn == "simd_matrix_multiply" {
         simd_matrix_multiply(a, b, c, n)
@@ -73,7 +91,7 @@ fn main(args, kwargs**) {
     }
 } 
 
-if __name__ == "__main__":
+export simd_subgraph_matching, simd_attention, simd_matrix_multiply
 
 
 

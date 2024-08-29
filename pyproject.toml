@@ -20,6 +20,9 @@ isort = "^5.13.2"
 wandb = "^0.17.8"
 python-dotenv = "^1.0.1"
 colorama = "^0.4.6"
+pyarrow = "^17.0.0"
+pandas = "^2.2.2"
+matplotlib = "^3.9.2"
 
 
 [build-system]
