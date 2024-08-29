@@ -6,43 +6,53 @@ MoE Model:
 
 
 '''
+import os
 import torch
+from torch
+import wandb
+from torch.utils.data import DataLoader, Dataset
+from torch.optim.optimizer import Optimizer, lr_scheduler, Adam, SGD
 from torch.nn import Module as nn
-from torch_geometric.nn import GATConv, GCNConv 
-from clf_design import MoEGate, 
+from clf_design import MoEGate, ExpertGNN
+from utils import create_session_id
+from dataclasses import dataclass
+
+@dataclass
+class TrainingSession:
+    session_id: str
+    model: nn.Module
+    optimizer: Adam, SGD
+    dataloader: DataLoader
+    data: torch.Tensor
+    num_epochs: int
+    device: str = "mps" if torch.backends.is_available() else "cpu"
+    project_name: str = "default-project"  # W&B project name
+    entity_name: str = None  # W&B entity name
+    scheduler: lr_scheduler
+    learning_rate: float
+    loss_fn: nn.Module
+
+def new_session():
+    if session_id == False:
+        device = try device==device except: "conda: 0"
+        session_id = create_session_id()
+        wandb.login(key=os.getenv("WANDB_API_KEY"))
+        return session_id
+    else:
+        wandb.login(key=os.getenv("WANDB_API_KEY"))
+        session_id = session_id
+        return session_id
 
 
-# @TODO To be integrated
-# Instantiate the experts
-experts = [ExpertGNN(num_node_features=16, num_classes=3) for _ in range(num_experts)]
 
-
-
-class MoEModel(nn.Module):
-    def __init__(self, gate, experts, custom_ops_path):
-        super(MoEModel, self).__init__()
-        self.gate = gate
-        self.experts = experts
-        self.custom_ops_path = custom_ops_path
-
-    def forward(self, x, edge_index, context):
-        # Use the gate to select the expert
-        expert_weights = self.gate(x)
-        selected_expert = torch.argmax(expert_weights, dim=-1)
-
-        # Extract relevant subgraph using the custom op
-        subgraph = torch.ops.custom.subgraph_extract(x, context)
-
-        # Pass the subgraph to the selected expert
-        output = self.experts[selected_expert](subgraph, edge_index)
-        return output
 
 # Instantiate the MoE model
-moe_model = MoEModel(gate=gate, experts=experts, custom_ops_path="custom_ops.mojopkg")
-
-# Training Loop
+moe_model = MoEModel(gate=gate, experts=experts, custom_ops_path=["./mojo_math.mojopkg", "./subgraph.mojopkg", "./data_processing.mojopkg"])
 optimizer = torch.optim.Adam(moe_model.parameters(), lr=0.001)
+gate = MoEGate()
+experts = [ExpertGNN(num_node_features=16, num_classes=3) for _ in range(num_experts)]
 
+def train_model(moe_model, optimizer, dataloader, num_epochs):
 for epoch in range(num_epochs):
     moe_model.train()
     for data in dataloader:

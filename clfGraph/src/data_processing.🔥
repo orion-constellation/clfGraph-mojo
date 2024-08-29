@@ -18,6 +18,8 @@ fn extract_and_process_nodes(nodes: &[Node], relationships: &[Relationship]) -> 
         }
         
     });
+
+fn extract_and_process_relationships(relationships: &[Relationship]) -> ProcessedRelationships {
     # Process Relationships
     let process_relationships = relationships.map(|relationship| {
         ProcessedRelationship {

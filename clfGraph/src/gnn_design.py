@@ -6,42 +6,47 @@ import torch
 from torch_geometric.nn import GATConv, GCNConv
 from torch.nn import Module as nn
 from torch.nn import functional as F
+# Import from Mojo
+from mojo_math import simd_matrix_multiply, simd_attention
 
-class GNNLayer(nn.Module):
-    def __init__(self, input_dim: int, number_of_experts:int):
-        super(GNNLayer, self).__init__()
-        self.gate = MoEGate(input_dim, number_of_experts)
-        self.experts = nn.ModuleList([Expert(input_dim) for _ in range(number_of_experts)])
 
-    def forward(self, x):
-        gate_outputs = self.gate(x)
-        expert_outputs = [expert(x) for expert in self.experts]
-        return torch.sum(torch.stack(expert_outputs) * gate_outputs, dim=0)
-    
 
-'''
-GNN Expert Design:
-- Use after the shared representation is generated once as the first layeer
+class GNNLayer:
+    def __init__(self, n_features):
+        self.n_features = n_features
+        self.weights = [1.0] * (n_features * n_features)
+        self.bias = [0.0] * n_features
 
-'''
-class GNNExpert(nn.Module):
-    def __init__(self, embedding_dim:int, heading_dim: int, num_classes: int, heads=8):
-        super(GNNExpert, self).__init__()
-        self.conv1 = GATConv(embedding_dim, hidden_dim, heads=heads)
-        self.conv2 = GATConv(hidden_dim*heads, hidden_dim, heads=heads)
-        self.fc = nn.Linear(hidden_dim * heads, num_classes)
+    def forward(self, node_features, adjacency_matrix):
+        output = [0.0] * (self.n_features * self.n_features)
+        simd_matrix_multiply(node_features, self.weights, output, self.n_features)
         
+        # Add bias and apply activation function
+        output = [x + 1.0 for x in output]  # Example activation
+        
+        return output
+
+''' 
+ExpertGNN:
+- Each is a trained on a different subset of data eg. Attacks types
+
+'''
+
+class ExpertGNN(nn.Module):
+    def __init__(self, num_node_features, num_classes):
+        super(ExpertGNN, self).__init__()
+        self.conv1 = GCNConv(num_node_features, 64)
+        self.conv2 = GCNConv(64, 128)
+        # Replace with SIMD Attention?
+        self.attn = GATConv(128, 128, heads=8)
+        self.fc = nn.Linear(128 * 8, num_classes)
     
-    def forward(self, data):
-        x, edge_index = data.x, data.edge_index
+    def forward(self, x, edge_index):
         x = F.relu(self.conv1(x, edge_index))
-        
-        attention_result = torch.empty(x.size())
-        simd_attention(x.detach().numpy(), self.fc2.weight.detach().numpy(), attention_result.numpy()) 
-        attention_result = torch.tensor(attention_result)
+        x = F.relu(self.conv2(x, edge_index))
+        x = F.relu(self.attn(x, edge_index))
+        x = torch.mean(x, dim=0)
+        return F.softmax(self.fc(x), dim=-1)
 
-        x = F.relu(self.conv2(attention_result, edge_index))
-        x = F.dropout(x, training=self.training)
-        x = self.fc(x)
-        return self.log_softmax(x, dim=1)
+
 

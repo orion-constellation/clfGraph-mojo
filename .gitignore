@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 dataset/
 **/*.env
+**/data/dataset/
+int_/
+*.env
 
 # C extensions
 *.so

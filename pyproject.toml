@@ -17,6 +17,9 @@ stix2 = "^3.0.1"
 scikit-learn = "^1.5.1"
 torch = "^2.4.0"
 isort = "^5.13.2"
+wandb = "^0.17.8"
+python-dotenv = "^1.0.1"
+colorama = "^0.4.6"
 
 
 [build-system]
