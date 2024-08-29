@@ -5,9 +5,10 @@ __pycache__/
 dataset/
 **/*.env
 **/data/dataset/
-int_/
+_int/
 *.env
 **/wandb/
+.pytest_cache
 
 # C extensions
 *.so

@@ -14,8 +14,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
 # Import the training functions (replace with actual import statements)
-from sklearn_baseline.models import (train_classification_models,
-                                     train_clustering_models)
+from src.sklearn_baseline.models import train_classification_models, train_clustering_models
 
 
 # Function to ensure results directory exists

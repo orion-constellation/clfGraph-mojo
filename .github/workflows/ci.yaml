@@ -1,0 +1,51 @@
+name: Python CI
+
+on: 
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Poetry
+      uses: abatilo/actions-poetry@v2
+      with:
+        poetry-version: 1.5.1  # Specify your desired Poetry version
+
+    - name: Install dependencies
+      run: poetry install
+
+    - name: Run isort
+      run: poetry run isort .
+
+    - name: Run pylint
+      run: poetry run pylint $(find . -name "*.py" | grep -v migrations)
+
+    - name: Check for unused libraries with `vulture`
+      run: poetry run vulture .
+
+    - name: Build the project
+      run: poetry build
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifact
+        path: dist/
+
+    - name: Run tests
+      run: poetry run pytest

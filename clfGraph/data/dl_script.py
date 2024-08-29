@@ -1,19 +1,27 @@
 '''
-Download your dataset in parts
+Download your dataset if it is in different files
 
 '''
-from dataclasses import dataclass
-import requests
 import os
-from src.custom_logging import logger
+import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Optional, Union 
-from clfGraph.src.constants import PROJECT_NAME  
+from dataclasses import dataclass
+from typing import List, Optional, Union
+from tqdm import tqdm
+import timeit
+
+import requests
 from dotenv import load_dotenv
+from src.custom_logging import configure_logging
+from src.constants import DATA_PATH, PROJECT_NAME
+logger = configure_logging()
+
 load_dotenv() 
 
 ##### SET CONFIG #####
-LOG_LEVEL= os.environ("LOG_LEVEL", "debug")
+LOG_LEVEL= os.environ("DEBUG")
+DL_TYPE="train"
+DEST_FOLDER=DATA_PATH
 
 # List of Files to Download
 # Can call all or this list
@@ -58,15 +66,38 @@ Parameters:
 @dataclass
 class DownloadSession:
     project_name: str
+    base_url: str
     file_list: Union[List[str], List[int]]
+    dest_folder: str
     dataset_name: str
     max_workers: int = 5
-    base_url: str
-    destination_folder: str
     chunk_size: int = 3
     max_retries: int = 3
     parallel: bool = True
-    train_test: Union[str, str, str]
+    train_test: Union[str, str]
+    
+
+
+
+download_session = DownloadSession(
+    project_name="ClfGraph",
+    base_url="http://205.174.165.80/IOTDataset/CICIoMT2024/Dataset/WiFI_and_MQTT/attacks/CSV/train",
+    file_list=file_list,
+    dest_folder=DEST_FOLDER,
+    dataset_name="CICIMT2024",
+    max_workers=5,
+    chunk_size=3,
+    max_retries=3, 
+    parallel=True,
+    train_test="train"
+)
+
+if os.path.exists(f".{DATA_PATH}/{download_session.train_test}"):
+    logger.info(f"Folder {PROJECT_NAME}/{download_session.train_test} already exists")
+else:
+    os.makedirs(f"{DATA_PATH}/{download_session.train_test}")
+    logger.info(f"{download_session.dest_folder}/{download_session.train_test} created")
+
 
 '''
 Download files in chunks in parallel using ThreadPoolExecutor.
@@ -77,18 +108,18 @@ Parameters:
 Returns:
 - None
 '''
-def download_chunk_parallel(self, file_list):
+def download_chunk_parallel(self, dl_session=download_session):
     logger.info("Downloading chunks in parallel")
-    for i, file_name in enumerate(self.file_list):
+    for i, file_name in tqdm(iterable=enumerate(file_list),colour="green", ascii=True, timeit=True):
         retries = 3
-        while retries < self.max_retries:
+        while retries < dl_session.max_retries:
             try:
                 with ThreadPoolExecutor(max_workers=5) as executor:
                     futures = []
-                    for i in range(0, len(file_list) + 1, self.chunk_size):
+                    for i in range(0, len(file_list) + 1, download_session.chunk_size):
                         start_index = i
-                        end_index = min(i + self.chunk_size, len(file_list + 1))
-                        futures.append(executor.submit(self.download_chunk, start_index, end_index))
+                        end_index = min(i + dl_session.chunk_size, len(file_list + 1))
+                        futures.append(executor.submit(download_chunk_parallel, start_index, end_index))
                     for future in futures:
                         future.result()  # Wait for all downloads to complete
                         
@@ -96,8 +127,8 @@ def download_chunk_parallel(self, file_list):
                         print(f"Failed to download {file_name}. Retry {retries}/{self.max_retries}. Error: {e}")
             except requests.exceptions.RequestException as e:
                 logger.error(f"Failed to download {file_name}. Error: {e}")
-            if retries == self.max_retries:
-                print(f"Failed to download {file_name} after {self.max_retries} retries.")
+            if retries == dl_session.max_retries:
+                logger.error(f"Failed to download {file_name} after {self.max_retries} retries.")
 
 '''
 Download all files at base_url in parallel using ThreadPoolExecutor.
@@ -108,49 +139,28 @@ Parameters:
 Returns:
 - None
 '''
-def download_all_parallel(self, file_list=file_list):
-    logger.info("###Downloading all files from:\n {file_list}")
-    total_files = len(file_list)
-    def download_all_parallel(self):
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            futures = {
-                executor.submit(self.download_file, file_name): file_name
-                for file_name in self.file_list
-            }
-            for future in as_completed(futures):
-                file_name = futures[future]
-                try:
-                    result = future.result()
-                    if result:
-                        logger.info(f"Successfully downloaded {file_name} in parallel.")
-                    else:
-                        logger.error(f"Failed to download {file_name} in parallel.")
-                except Exception as e:
-                    logger.error(f"Exception occurred while downloading {file_name}: {e}")
+
+logger.info("###Downloading all files from:\n {file_list}")
+total_files = len(file_list)
+def download_all_parallel(self):
+    with ThreadPoolExecutor(max_workers=download_session.max_workers) as executor:
+        futures = {
+            executor.submit(download_all_parallel, file_name): file_name
+            for file_name in file_list
+        }
+        for future in tqdm(as_completed(futures), colour="green", ascii=True, mininterval=0.1):
+            file_name = futures[future]
+            try:
+                result = future.result()
+                if result:
+                    logger.info(f"Successfully downloaded {file_name} in parallel.")
+                else:
+                    logger.error(f"Failed to download {file_name} in parallel.")
+            except Exception as e:
+                logger.error(f"Exception occurred while downloading {file_name}: {e}")
 
 
 
-DL_TYPE="train"
-dest_folder='./{PROJECT}/raw/'
-
-download_session = DownloadSession(
-    project_name="ClfGraph",
-    file_list=file_list,
-    dataset_name="CICIMT2024",
-    max_workers=5,
-    base_url="http://205.174.165.80/IOTDataset/CICIoMT2024/Dataset/WiFI_and_MQTT/attacks/CSV/train",
-    file_list=file_list,
-    dest_folder='./{PROJECT}/raw/',
-    chunk_size=3, 
-    parallel=True,
-    train_test="train"
-)
-
-if os.path.exists(f"../dataset/{PROJECT}/{download_session.train_test}"):
-    logger.info(f"Folder {PROJECT}/{download_session.train_test} already exists")
-else:
-    os.makedirs(f"{download_session.dest_folder}/{download_session.train_test}")
-    logger.info(f"{dest_folder}/{download_session.train_test} created")
 
 
 

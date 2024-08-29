@@ -5,6 +5,7 @@ description = "Experimental architecture combining the best of shallow Neural Ne
 authors = ["snyata <core@synavate.tech>"]
 license = "Apache-2.0"
 readme = "README.md"
+packages=[{ include = "clfgraph"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -23,7 +24,22 @@ colorama = "^0.4.6"
 pyarrow = "^17.0.0"
 pandas = "^2.2.2"
 matplotlib = "^3.9.2"
+pytest = "^8.3.2"
+tqdm = "^4.66.5"
+streamlit = "^1.38.0"
+sqlalchemy = "^2.0.32"
+psycopg2-binary = "^2.9.9"
 
+
+
+[tool.poetry.group.dev.dependencies]
+isort = "^5.13.2"
+pylint = "^3.2.6"
+black = "^24.8.0"
+flake8 = "^7.1.1"
+pytest-cov = "^5.0.0"
+vulture = "^2.11"
+tree = "^0.2.4"
 
 [build-system]
 requires = ["poetry-core"]

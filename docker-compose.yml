@@ -7,8 +7,51 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+    depends_on:
+      - db
+      - memgraph
+
+  sklearn:
+    build:
+      context: .
+      dockerfile: Dockerfile.sklearn
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - memgraph
     environment:
-      - PYTHONUNBUFFERED=1
+      DATABASE_HOST: db
+
+  db:
+    build:
+      context: ./data/
+      dockerfile: Dockerfile.db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=your_user
+      - POSTGRES_PASSWORD=your_password
+      - POSTGRES_DB=your_db
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
+
+  memgraph:
+    build:
+      context: .
+      dockerfile: Dockerfile.memgraph
+    ports:
+      - "7687:7687"
+      - "3000:3000"  # Memgraph Lab
+    volumes:
+      - memgraph-data:/var/lib/memgraph
+    environment:
+      - MEMGRAPH="memgraph"
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  memgraph-data:
