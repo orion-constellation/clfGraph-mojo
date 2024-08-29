@@ -1,6 +1,7 @@
 '''
 Create a custom op for extraction of subgraphs
 
+- Likely to do the same thing in Rust to compare
 '''
 from max import register
 from max.extensibility import Tensor, empty_tensor
@@ -19,3 +20,4 @@ fn extract_based_on_context(type, rank, x, context):
     var extracted_subgraph = extract_based_on_context(x, context)
     return extracted_subgraph
     
+    export extract_based_on_context, subgraph_extract
