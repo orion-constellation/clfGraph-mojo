@@ -1,0 +1,163 @@
+from src.mojo_cpts.data_procesing import extract_and_process_nodes, extract_and_process_relationships
+from src.mojo_cpts.mojo_math import simd_subgraph_matching, simd_attention, simd_matrix_multiply
+from mojo_cpts.subgraphs import extract_based_on_context, subgraph_extract
+
+
+struct Node:
+    var id: Int
+    var name: String
+    var type: String
+    var created: Optional[String]
+
+struct Relationship:
+    var source: Int
+    var target: Int
+    var type: String
+
+struct ProcessedNode:
+    var id: Int
+    var name: String
+    var type: String
+    var created: String
+
+struct ProcessedRelationship:
+    var source: Int
+    var target: Int
+    var relationship_type: String
+
+# Mock Data for Testing
+fn create_mock_nodes() -> List[Node]:
+    return [
+        Node(1, "Node1", "TypeA", "2023-01-01"),
+        Node(2, "Node2", "TypeB", None),
+        Node(3, "Node3", "TypeC", "2023-01-03")
+    ]
+
+fn create_mock_relationships() -> List[Relationship]:
+    return [
+        Relationship(1, 2, "RELATES_TO"),
+        Relationship(2, 3, "DEPENDS_ON")
+    ]
+
+# Test extract_and_process_nodes
+fn test_extract_and_process_nodes():
+    nodes = create_mock_nodes()
+    processed_nodes, _ = extract_and_process_nodes(nodes, [])
+    
+    assert len(processed_nodes) == 3
+    assert processed_nodes[0].id == 1
+    assert processed_nodes[1].created == ""
+    assert processed_nodes[2].name == "Node3"
+
+# Test extract_and_process_relationships
+fn test_extract_and_process_relationships():
+    relationships = create_mock_relationships()
+    _, processed_relationships = extract_and_process_nodes([], relationships)
+    
+    assert len(processed_relationships) == 2
+    assert processed_relationships[0].source == 1
+    assert processed_relationships[1].target == 3
+    assert processed_relationships[0].relationship_type == "RELATES_TO"
+
+# Test simd_matrix_multiply
+fn test_simd_matrix_multiply():
+    a = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+    b = [8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0]
+    c = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    simd_matrix_multiply(a, b, c, 8)
+    
+    assert c[0] == 36.0  # Example assertion, adjust according to the expected result
+
+# Test simd_attention
+fn test_simd_attention():
+    query = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+    key = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    value = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    result = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    simd_attention(query, key, value, result, 8)
+    
+    assert result[0] == 4.0  # Example assertion, adjust according to the expected result
+
+# Test simd_subgraph_matching
+fn test_simd_subgraph_matching():
+    graph_data = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 
+
+
+struct Node:
+    var id: Int
+    var name: String
+    var type: String
+    var created: Optional[String]
+
+struct Relationship:
+    var source: Int
+    var target: Int
+    var type: String
+
+struct ProcessedNode:
+    var id: Int
+    var name: String
+    var type: String
+    var created: String
+
+struct ProcessedRelationship:
+    var source: Int
+    var target: Int
+    var relationship_type: String
+
+# Mock Data for Testing
+fn create_mock_nodes() -> List[Node]:
+    return [
+        Node(1, "Node1", "TypeA", "2023-01-01"),
+        Node(2, "Node2", "TypeB", None),
+        Node(3, "Node3", "TypeC", "2023-01-03")
+    ]
+
+fn create_mock_relationships() -> List[Relationship]:
+    return [
+        Relationship(1, 2, "RELATES_TO"),
+        Relationship(2, 3, "DEPENDS_ON")
+    ]
+
+# Test extract_and_process_nodes
+fn test_extract_and_process_nodes():
+    nodes = create_mock_nodes()
+    processed_nodes, _ = extract_and_process_nodes(nodes, [])
+    
+    assert len(processed_nodes) == 3
+    assert processed_nodes[0].id == 1
+    assert processed_nodes[1].created == ""
+    assert processed_nodes[2].name == "Node3"
+
+# Test extract_and_process_relationships
+fn test_extract_and_process_relationships():
+    relationships = create_mock_relationships()
+    _, processed_relationships = extract_and_process_nodes([], relationships)
+    
+    assert len(processed_relationships) == 2
+    assert processed_relationships[0].source == 1
+    assert processed_relationships[1].target == 3
+    assert processed_relationships[0].relationship_type == "RELATES_TO"
+
+# Test simd_matrix_multiply
+fn test_simd_matrix_multiply():
+    a = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+    b = [8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0]
+    c = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    simd_matrix_multiply(a, b, c, 8)
+    
+    assert c[0] == 36.0  # Example assertion, adjust according to the expected result
+
+# Test simd_attention
+fn test_simd_attention():
+    query = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+    key = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    value = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    result = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    simd_attention(query, key, value, result, 8)
+    
+    assert result[0] == 4.0  # Example assertion, adjust according to the expected result
+
+# Test simd_subgraph_matching
+fn test_simd_subgraph_matching():
+    graph_data = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 

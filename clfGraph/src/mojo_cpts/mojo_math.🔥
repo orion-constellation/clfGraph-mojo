@@ -1,0 +1,97 @@
+'''
+Custom Operations and SIMD Operations:
+- Implementation from Mojo🔥
+The ISC classifier can benefit from Mojo’s SIMD capabilities to optimize operations such as matrix multiplications 
+and activation functions. We can implement the gating mechanism in PyTorch and offload performance-critical operations to Mojo.
+
+Mojo Implementation of Performance-Critical Ops
+Assume we have a SIMD-optimized matrix multiplication in Mojo, which can be linked and called from Python:
+
+#mojo package custom_ops
+
+'''
+
+"""
+SIMD MatMul
+"""
+
+'''
+Mojo: simd_matrix_multiply.Mojo🔥
+- Can insert at any point in the model graph
+- Use Torch visualization tools to debug and visualize the model graph
+- Follow Research and understand how the model is structured
+
+'''
+
+#Mojo function for SIMD-based matrix multiplication
+fn simd_matrix_multiply(a: &[f32], b: &[f32], c: &mut [f32], n: usize) {
+for i in 0..n {
+    for j in 0..n {
+        let mut sum = f32x8::splat(0.0)
+        for k in (0..n).step_by(8) {
+            let a_chunk = f32x8::from_slice_unaligned(&a[i * n + k..])
+            let b_chunk = f32x8::from_slice_unaligned(&b[k * n + j..])
+            sum += a_chunk * b_chunk
+        }
+        
+         }
+            dot_matrix = c[i * n + j] = sum.sum()
+    }
+    return dot_matric
+}
+
+
+'''
+CUSTOM ATTENTION MECHANISM:
+- 8 Heads
+- Used to enhance the context awareness of the model.
+'''
+
+fn simd_attention(query: &[f32], key: &[f32], value: &[f32], result: &mut [f32], n: usize) {
+results = {}    
+for i in 0..n {
+        let q = f32x8::from_slice_unaligned(&query[i..]);
+        let mut weighted_sum = f32x8::splat(0.0);
+        for j in (0..n).step_by(8) {
+            let k = f32x8::from_slice_unaligned(&key[j..]);
+            let v = f32x8::from_slice_unaligned(&value[j..]);
+            let weight = q * k;
+            weighted_sum += weight * v;
+        }
+        result[i] = results.append(weighted_sum.sum());
+    }
+    return result[i]
+}
+
+    
+
+'''
+SIMD Subgraph Matching:
+- Used to match the subgraph to the expert
+- Used to enhance the context awareness of the model.
+- SIMD is a single calculation type across a vector of data (works similar to pandas)
+
+
+
+'''
+fn simd_subgraph_matching(graph_data: &[f32], pattern_data: &[f32], result: &mut [bool], n: usize) {
+    let graph_chunk = 
+    let subgraph = 
+
+    return sub_graph
+}
+
+
+
+fn main(args, kwargs**) {
+    if fn == "simd_matrix_multiply" {
+        simd_matrix_multiply(a, b, c, n)
+    } else if fn == "simd_attention" {
+        simd_attention(args[0], args[1], args[2], args[3], args[4])
+    }
+} 
+
+    export simd_subgraph_matching, simd_attention, simd_matrix_multiply
+
+
+

@@ -1,0 +1,9 @@
+CREATE (instance:ThreatInstance {instance_id: 'TI-001', timestamp: '2022-03-01', severity: 'High', description: 'Targeted attack on Finance'})
+CREATE (vector:AttackVector {vector_type: 'Phishing', description: 'Spear phishing email'})
+CREATE (exploit:Exploit {exploit_name: 'CVE-2021-34527', cve_id: 'CVE-2021-34527', description: 'PrintNightmare vulnerability'})
+
+MATCH (instance:ThreatInstance {instance_id: 'TI-001'}), (vector:AttackVector {vector_type: 'Phishing'})
+CREATE (instance)-[:CONTAINS {first_seen: '2022-03-01', last_seen: '2022-03-02', severity: 'High'}]->(vector)
+
+MATCH (instance:ThreatInstance {instance_id: 'TI-001'}), (exploit:Exploit {exploit_name: 'CVE-2021-34527'})
+CREATE (instance)-[:CONTAINS {first_seen: '2022-03-01', last_seen: '2022-03-02', severity: 'Critical'}]->(exploit)

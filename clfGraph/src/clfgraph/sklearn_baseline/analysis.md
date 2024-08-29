@@ -1,4 +1,0 @@
-# Baseline Analysis
-
-## Models Used:
-

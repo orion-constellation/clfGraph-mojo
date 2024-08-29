@@ -1,7 +1,0 @@
-[package]
-name = "memgraph-client"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-syn_crabs = "0.2.0"

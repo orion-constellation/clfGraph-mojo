@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -e
+
+poetry install
+poetry run lint
+poetry run isort
+poetry run build
+git add dist/
+git add poetry.lock

@@ -32,6 +32,8 @@ sqlalchemy = "^2.0.32"
 psycopg2-binary = "^2.9.9"
 seaborn = "^0.13.2"
 uuid = "^1.30"
+gensim = "^4.3.3"
+nltk = "^3.9.1"
 
 
 
