@@ -6,13 +6,19 @@ http://205.174.165.80/IOTDataset/CICIoMT2024/Dataset/WiFI_and_MQTT/attacks
 
 ![Version](https://img.shields.io/badge/version-v0.1.0-blue)
 ![Release](https://img.shields.io/badge/release-latest-green)
+![CodeCoverage](https://img.shields.io/codecov/c/gh/orion-constellation/clfGraph-mojo/main)
 ![Tests](https://github.com/orion-constellation/clfGraph-mojo/actions/workflows/ci.yml/badge.svg?branch=main&event=push)
 
 ## Overview
 
 ### Research Goal
 
-Incorporate a Classification Gate into a Hiearchal Mixture of Experts
+- Use Mojo and Rust components to deepen systems programming understanding
+- Building a new architecture from scratch using intuitions built over the last year and a half.
+- Incorporate a Classification Gate into a Hiearchal Mixture of Experts
+- Implement a Graph Generator in PetGraph for concurrency and fingerprinting traffic in near real time. Start with Rustworkx in Python.
+- Integrate a Graph Database (Memgraph) for storing data about the knowledge graphs.
+- Experiment with HMoE's
 
 ### Hiearachal Mixture of Experts (HMoE) Model
 
