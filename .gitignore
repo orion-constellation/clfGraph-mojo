@@ -9,7 +9,7 @@ _int/
 *.env
 **/wandb/
 .pytest_cache
-dist/
+**/dist/
 _int/
 poetry.lock
 cargo.lock
