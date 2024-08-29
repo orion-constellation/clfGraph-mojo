@@ -5,7 +5,29 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GATConv, GCNConv
 
+'''
+Shared Representation:
+- Generates a representation of the STIX Data Chosen
+- Will begin with a simple model and tune with the data
 
+
+
+'''
+
+class SharedRepresentation(nn.Module):
+    def __init__(self, input_dim, embedding_dim):
+        super(SharedRepresentation, self).__init__()
+        self.fc1 = nn.Linear(input_dim, 256)
+        self.fc2 = nn.Linear(256, embedding_dim)
+
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        shared_representation = self.fc2(x)
+        return shared_representation
+    
+
+
+    
 class ISCGatingNetwork(nn.Module):
     def __init__(self, embedding_dim: int, number_of_experts: int):
         super(ISCGatingNetwork, self).__init__()
@@ -35,24 +57,7 @@ class GNNLayer:
         
         return output
 
-'''
-Shared Representation:
-- 
 
-
-'''
-
-class SharedRepresentation(nn.Module):
-    def __init__(self, input_dim, embedding_dim):
-        super(SharedRepresentation, self).__init__()
-        self.fc1 = nn.Linear(input_dim, 256)
-        self.fc2 = nn.Linear(256, embedding_dim)
-
-    def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        shared_representation = self.fc2(x)
-        return shared_representation
-    
 '''
 Hierarchical MoE Base Class:
 - To be revised and tuned when the GNN is implemented
@@ -65,7 +70,9 @@ Hierarchical MoE Base Class:
 class HMoE:
     def __init__(self, classifier_weights, n_experts: int, n_features: int):
         self.classifier_weights = classifier_weights
-        self.gnn_expets = [GNNLayer(n_features) for _ in range(n_experts)]
+        self.gnn_experts = [GNNLayer(n_features) for _ in range(n_experts)]
+        
+    def forward(self, x)
 
 class MoEGate(nn.Module):
     def __init__(self, input_dim: int, num_experts: int):
@@ -75,26 +82,6 @@ class MoEGate(nn.Module):
     def forward(self, x):
         return F.softmax(self.fc(x), dim=-1)
 
-''' 
-ExpertGNN:
-- Each is a trained on a different subset of data eg. Attacks types
-
-'''
-
-class ExpertGNN(nn.Module):
-    def __init__(self, num_node_features, num_classes):
-        super(ExpertGNN, self).__init__()
-        self.conv1 = GCNConv(num_node_features, 64)
-        self.conv2 = GCNConv(64, 128)
-        self.attn = GATConv(128, 128, heads=8)
-        self.fc = nn.Linear(128 * 8, num_classes)
-    
-    def forward(self, x, edge_index):
-        x = F.relu(self.conv1(x, edge_index))
-        x = F.relu(self.conv2(x, edge_index))
-        x = F.relu(self.attn(x, edge_index))
-        x = torch.mean(x, dim=0)
-        return F.softmax(self.fc(x), dim=-1)
 
 
 

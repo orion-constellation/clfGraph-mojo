@@ -5,7 +5,7 @@ Attention Layers and additional
 import torch
 import torch.nn.functional as F
 from torch.nn import Module as nn
-from torch_geometric.nn import GATConv, GCNConv, GNNLayer
+from torch_geometric.nn import GATConv, GCNConv
 from torch_geometric.utils import add_self_loops, degree
 
 '''Global Graph Attention Layer
@@ -14,7 +14,7 @@ from torch_geometric.utils import add_self_loops, degree
 class GlobalAttentionGNN(nn.Module):
     def __init__(self, node_features, global_features):
         super().__init__()
-        self.gnn = GNNLayer(node_features, node_features)
+        self.gnn = GNNLayer(global_features, node_features)
         self.global_attention = nn.Linear(node_features, 1)
         
     def forward(self, x, edge_index, batch):

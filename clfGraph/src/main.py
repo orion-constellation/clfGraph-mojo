@@ -1,9 +1,8 @@
 '''
-MoE Model:
+MoE Model (Pytorch and Torch Geometric)
 - Integrate Custom Operations and Set Classification and Graph Layers
--Create the training loop passing data between each model
-
-
+- Create the training loop passing data between each model
+- Compare Results to the SKLearn and basic statistical analysis
 
 '''
 import os
@@ -14,10 +13,11 @@ from torch
 from dataclasses import dataclass
 
 import wandb
-from clf_design import ExpertGNN, MoEGate
 from torch.nn import Module as nn
 from torch.optim.optimizer import SGD, Adam, Optimizer, lr_scheduler
 from torch.utils.data import DataLoader, Dataset
+
+from clf_design import ExpertGNN, MoEGate
 from utils import create_session_id
 
 

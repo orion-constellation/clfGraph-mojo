@@ -1,21 +1,19 @@
-'''
-Simple  Streamlit Graph to Vizualise Data
-
-
-
-
-'''
-
 import os
 from collections import defaultdict
-from datetime import date
 
 import pandas as pd
 import streamlit as st
 import wandb
-from constants import PROJECT_NAME
+from tqdm import tqdm
 from sklearn.base import BaseEstimator
-from sklearn_baseline.main import clf_models, cluster_models, params
+from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans, MeanShift
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+
+# Import the training functions (replace with actual import statements)
 from sklearn_baseline.models import (train_classification_models,
                                      train_clustering_models)
 
@@ -27,7 +25,7 @@ def ensure_dir(directory: str):
 
 # Function to load CSV files from the data directory
 def load_data_sources():
-    data_dir = "../data/dataset/final"
+    data_dir = "./data/"
     
     if not os.path.exists(data_dir):
         st.error(f"No data folder found. Please add some CSV files to the data directory.")
@@ -41,7 +39,7 @@ def load_data_sources():
     
     return {os.path.splitext(f)[0]: os.path.join(data_dir, f) for f in csv_files}
 
-# Initialize Streamlit
+
 def main():
     st.title("ClfGraph Dashboard")
     st.subheader("by Nentropy")
@@ -50,7 +48,9 @@ def main():
         st.header("Configuration")
         
         # Project selection dropdown
-        project_selection = st.selectbox("Select Project", ["clfGraph"])
+        project_select = st.selectbox("Select Project", ["clfGraph"])
+        if project_select not in st.session_state:
+            st.session_state[project_select] = project_select
         
         # Load available data sources
         data_sources = load_data_sources()
@@ -60,10 +60,9 @@ def main():
                 options=list(data_sources.keys()),
             )
 
-            # Load the selected data source
+            # Load the selected data source and store it in session_state
             data_path = data_sources[selected_source]
-            #data = pd.read_csv(data_path)
-            st.session_state['data'] = data
+            st.session_state['data'] = pd.read_csv(data_path)
 
     # Model configuration
     if 'data' in st.session_state:
@@ -82,17 +81,38 @@ def main():
         
         with col1:
             if st.button("Run Classification"):
-                # Placeholder for training data split
-                models = clf_models
-                params = params
-                train_classification_models(data=data, models=models, params=params)
+                X_train, X_test, y_train, y_test = train_test_split(data.iloc[:, :-1], data.iloc[:, -1], test_size=0.2, random_state=42)
+                clf_models = defaultdict(BaseEstimator, {
+                    "LogisticRegression": LogisticRegression(),
+                    "DecisionTree": DecisionTreeClassifier(),
+                    "RandomForest": RandomForestClassifier(),
+                    "GradientBoosting": GradientBoostingClassifier(),
+                    "SVC": SVC(probability=True)
+                })
+                params = {
+                    "project_name": "clfGraph",
+                    "random_state": 42,
+                    "test_size": 0.2
+                }
+        with st.spinner:
+            tqdm(train_classification_models(data, clf_models, params))
         
         with col2:
             if st.button("Run Clustering"):
-                # Placeholder for clustering data split
-                models = cluster_models
-                params = params
-                train_clustering_models(data, cluster_models, params)
+                X_train = data.iloc[:, :-1]
+                cluster_models = defaultdict(BaseEstimator, {
+                    "KMeans": KMeans(),
+                    "DBSCAN": DBSCAN(),
+                    "AgglomerativeClustering": AgglomerativeClustering(),
+                    "MeanShift": MeanShift()
+                })
+                params = {
+                    "project_name": "clfGraph",
+                    "random_state": 42,
+                    "n_clusters": 3
+                }
+                with st.spinner:
+                    tqdm(train_clustering_models(data, cluster_models, params))
         
         # Display results if available
         if st.session_state['classification_results'] or st.session_state['clustering_results']:
@@ -109,8 +129,8 @@ def main():
             wandb.run.log_code(".")
             wandb.finish()
 
-if __name__ == "__main__":
-    st.set_page_config(
+st.set_page_config(
         page_title="ClfGraph Dashboard", page_icon=":chart_with_upwards_trend:"
     )
-    main()
+main()
+    

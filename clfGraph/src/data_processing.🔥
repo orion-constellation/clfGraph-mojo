@@ -1,5 +1,7 @@
 '''
 Mojo Data Processing;
+- Parse Nodes
+- Parse Relationships
 
 
 # mojo package custom_ops
@@ -16,7 +18,7 @@ fn extract_and_process_nodes(nodes: &[Node], relationships: &[Relationship]) -> 
             type: node.type,
             created: node.created.unwrap_or_default(),
         }
-        
+       return processed_nodes 
     });
 
 fn extract_and_process_relationships(relationships: &[Relationship]) -> ProcessedRelationships {
@@ -28,5 +30,7 @@ fn extract_and_process_relationships(relationships: &[Relationship]) -> Processe
             relationship_type: rel.type,
         }
     });
+    
+    }
     return (processed_nodes, process_relationships);
 }
