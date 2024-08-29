@@ -1,42 +1,31 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
-    depends_on:
-      - db
-      - memgraph
-
-  sklearn:
+  sklearn-orion-0x0:
     build:
       context: .
       dockerfile: Dockerfile.sklearn
     ports:
-      - "3000:3000"
+      - "8000:8000"
     depends_on:
-      - db
+      - postgres
       - memgraph
     environment:
-      DATABASE_HOST: db
+      DATABASE_HOST: postgres
+    restart: on-failure
 
-  db:
+  postgres:
     build:
-      context: ./data/
-      dockerfile: Dockerfile.db
+      context: .
+      dockerfile: Dockerfile.postgres
     ports:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=your_user
-      - POSTGRES_PASSWORD=your_password
-      - POSTGRES_DB=your_db
-    security_opt:
-      - no-new-privileges:true
+      - POSTGRES_USER=$PSQL_USER
+      - POSTGRES_PASSWORD=$PSQL_PASS
+      - POSTGRES_DB=$PSQL_DATABASE
     restart: unless-stopped
 
   memgraph:
@@ -45,13 +34,29 @@ services:
       dockerfile: Dockerfile.memgraph
     ports:
       - "7687:7687"
-      - "3000:3000"  # Memgraph Lab
+      - "3000:3000"
     volumes:
       - memgraph-data:/var/lib/memgraph
     environment:
       - MEMGRAPH="memgraph"
     restart: unless-stopped
 
+  elk:
+    image: sebp/elk
+    ports:
+      - "5601:5601"  # Kibana
+      - "9200:9200"  # Elasticsearch
+      - "5044:5044"  # Logstash
+    volumes:
+      - elasticsearch-data:/var/lib/elastic
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    depends_on:
+      - postgres
+      - memgraph
+    restart: on-failure
+
 volumes:
   db-data:
   memgraph-data:
+  elasticsearch-data:

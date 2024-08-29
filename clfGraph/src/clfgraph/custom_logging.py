@@ -10,9 +10,9 @@ SIMPLE_LOG_FORMAT = "[%(asctime)s] %(levelname)s %(message)s"
 DEBUG_LOG_FORMAT = "[%(asctime)s] %(levelname)s %(filename)s:%(lineno)03d  %(message)s"
 LOG_LEVEL = logging.DEBUG
 
-def configure_logging(level: int = LOG_LEVEL) -> None:
-    """Configure the native logging module."""
-  
+def configure_logging(level: int = LOG_LEVEL) -> logging.Logger:
+    """Configure the native logging module and return the logger."""
+    
     # Auto-adjust default log format based on log level
     log_format = DEBUG_LOG_FORMAT if level == logging.DEBUG else SIMPLE_LOG_FORMAT
 
@@ -20,18 +20,22 @@ def configure_logging(level: int = LOG_LEVEL) -> None:
     log_dir = "./logs"
     os.makedirs(log_dir, exist_ok=True)
 
+    # Create logger
+    logger = logging.getLogger(__name__)
+    logger.setLevel(level)
+
+    # Console handler with custom formatter
     console_handler = logging.StreamHandler()
-    file_handler = logging.FileHandler(f"{log_dir}/{__name__}_{date.today()}.log")
-    
     console_handler.setFormatter(FancyConsoleFormatter(log_format))
+
+    # File handler with standard formatter
+    file_handler = logging.FileHandler(f"{log_dir}/{__name__}_{date.today()}.log")
     file_handler.setFormatter(logging.Formatter(log_format))
 
-    # Configure the root logger
-    logging.basicConfig(
-        level=level,
-        format=log_format,
-        handlers=[console_handler, file_handler],
-    )
+    # Add handlers to the logger
+    if not logger.hasHandlers():  # To prevent adding handlers multiple times
+        logger.addHandler(console_handler)
+        logger.addHandler(file_handler)
     
     return logger
 
@@ -78,12 +82,20 @@ class FancyConsoleFormatter(logging.Formatter):
 
         return super().format(record)
 
-# Example usage:
-if __name__ == "__main__":
-    configure_logging()
-    logger = logging.getLogger(__name__)
+
+def main():
+    # Configure the logger
+    logger = configure_logging()
+
+    # Example logging
     logger.debug("This is a debug message.")
     logger.info("This is an info message.")
     logger.warning("This is a warning message.")
     logger.error("This is an error message.")
     logger.critical("This is a critical message.")
+    return logger
+
+
+# Example usage:
+if __name__ == "__main__":
+    main()

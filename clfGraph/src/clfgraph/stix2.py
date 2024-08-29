@@ -1,9 +1,8 @@
 import json
 
-import stix2patterns
-
 import stix2
 import stix2.utils
+import stix2patterns
 
 '''
 Parse STIX data from a JSON string.

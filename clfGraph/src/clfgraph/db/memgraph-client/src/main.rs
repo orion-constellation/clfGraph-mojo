@@ -25,6 +25,11 @@ pub async fn main() -> Result<(), <Error()>> {
     let status = connection.status().panic();
 
     if status != ConnectionStatus::Ready {
+        logger::error("Connection failed with status {:?}", status)
+        return;
+    } else {
+        logger::info("Connection established with ")
+    }
 
     }
 

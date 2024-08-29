@@ -13,11 +13,10 @@ from torch
 from dataclasses import dataclass
 
 import wandb
+from clf_design import ExpertGNN, MoEGate
 from torch.nn import Module as nn
 from torch.optim.optimizer import SGD, Adam, Optimizer, lr_scheduler
 from torch.utils.data import DataLoader, Dataset
-
-from clf_design import ExpertGNN, MoEGate
 from utils import create_session_id
 
 

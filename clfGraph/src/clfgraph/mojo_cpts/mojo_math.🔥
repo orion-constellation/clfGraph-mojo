@@ -63,7 +63,7 @@ for i in 0..n {
     return result[i]
 }
 
-    export simd_attention, simd_matrix_multiply
+    
 
 '''
 SIMD Subgraph Matching:
@@ -91,7 +91,7 @@ fn main(args, kwargs**) {
     }
 } 
 
-export simd_subgraph_matching, simd_attention, simd_matrix_multiply
+    export simd_subgraph_matching, simd_attention, simd_matrix_multiply
 
 
 

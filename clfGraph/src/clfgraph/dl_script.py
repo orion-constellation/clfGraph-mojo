@@ -2,24 +2,29 @@
 Download your dataset if it is in different files
 
 '''
-import os
 import logging
+import os
+import timeit
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import List, Optional, Union
-from tqdm import tqdm
-import timeit
 
 import requests
+import wandb
+from clfgraph.constants import DATA_PATH, PROJECT_NAME
+from clfgraph.custom_logging import configure_logging
+logger=configure_logging(level="DEBUG")
 from dotenv import load_dotenv
-from src.custom_logging import configure_logging
-from src.constants import DATA_PATH, PROJECT_NAME
-logger = configure_logging()
+
+from clfgraph.sklearn_baseline.models import init_wandb, params
+from tqdm import tqdm
+
+logger.info("Logger works")
 
 load_dotenv() 
 
 ##### SET CONFIG #####
-LOG_LEVEL= os.environ("DEBUG")
+LOG_LEVEL= os.environ(LOG_LEVEL="DEBUG")
 DL_TYPE="train"
 DEST_FOLDER=DATA_PATH
 
@@ -84,7 +89,7 @@ download_session = DownloadSession(
     base_url="http://205.174.165.80/IOTDataset/CICIoMT2024/Dataset/WiFI_and_MQTT/attacks/CSV/train",
     file_list=file_list,
     dest_folder=DEST_FOLDER,
-    dataset_name="CICIMT2024",
+    dataset_name="CICIMT2024_0x0",
     max_workers=5,
     chunk_size=3,
     max_retries=3, 
@@ -109,6 +114,7 @@ Returns:
 - None
 '''
 def download_chunk_parallel(self, dl_session=download_session):
+    init_wandb(project=PROJECT_NAME, config=params, name=f"downloading_dataset: {download_session.dataset_name}", job_type="dataset")
     logger.info("Downloading chunks in parallel")
     for i, file_name in tqdm(iterable=enumerate(file_list),colour="green", ascii=True, timeit=True):
         retries = 3
@@ -116,7 +122,7 @@ def download_chunk_parallel(self, dl_session=download_session):
             try:
                 with ThreadPoolExecutor(max_workers=5) as executor:
                     futures = []
-                    for i in range(0, len(file_list) + 1, download_session.chunk_size):
+                    for i in tqdm(range(0, len(file_list) + 1, download_session.chunk_size), colour="green", ascii=True):
                         start_index = i
                         end_index = min(i + dl_session.chunk_size, len(file_list + 1))
                         futures.append(executor.submit(download_chunk_parallel, start_index, end_index))
@@ -124,12 +130,12 @@ def download_chunk_parallel(self, dl_session=download_session):
                         future.result()  # Wait for all downloads to complete
                         
                         retries += 1
-                        print(f"Failed to download {file_name}. Retry {retries}/{self.max_retries}. Error: {e}")
+                        logger.error(f"Failed to download {file_name}. Retry {retries}/{self.max_retries}. Error: {e}")
             except requests.exceptions.RequestException as e:
                 logger.error(f"Failed to download {file_name}. Error: {e}")
             if retries == dl_session.max_retries:
                 logger.error(f"Failed to download {file_name} after {self.max_retries} retries.")
-
+    wandb.log(futures)
 '''
 Download all files at base_url in parallel using ThreadPoolExecutor.
 

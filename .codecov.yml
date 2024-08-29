@@ -1,0 +1,36 @@
+codecov:
+  token: "2773be63-5e01-46a1-8a9a-1d3dcd6128b4"
+  bot: "codecov-io"
+  
+  ci:
+    - "github actions"
+  
+  max_report_age: 24
+  disable_default_path_fixes: false
+  require_ci_to_pass: true
+    
+  ignore:
+    - "**/__pycache__"
+    - "**/.github" 
+    - "**/.devcontainer" 
+    - "**/_int**"
+    - "**/tests"
+    - "**/ml_models"
+    - "**/.pytest_cache"
+    - "**/dist"
+    - "**/target"
+    - "docker-compose.yml"
+    - "Dockerfile.*"
+    - "**/.git"
+    - "*.env"
+    
+
+  
+  notify:
+    after_n_builds: 2
+    wait_for_ci: true
+
+coverage:
+  range: "60...80"
+  round: down
+  precision: 2
