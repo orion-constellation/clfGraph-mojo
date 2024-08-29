@@ -18,3 +18,4 @@ build/
 .eggs/
 *.egg-info/
 poetry.lock
+codecov.yml
