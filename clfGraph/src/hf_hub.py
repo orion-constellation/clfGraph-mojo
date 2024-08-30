@@ -7,10 +7,10 @@ import os
 import shutil
 from pathlib import Path
 
-import clfgraph.custom_logging
-from clfgraph.constants import __VERSION__, PROJECT_NAME
-from clfgraph.custom_logging import configure_logging
-from datasets import Dataset, DatasetDict
+import logging
+from constants import __VERSION__, PROJECT_NAME
+from custom_logging import configure_logging
+from datasets import Dataset, DatasetDict, load_dataset
 from dotenv import load_dotenv
 from huggingface_hub import HfApi, Repository, login
 
@@ -41,8 +41,8 @@ def upload_to_hf_hub(params, name, __VERSION__=__VERSION__):
         api = HfApi()
         model_name = name
         # Check if the repository exists
-        repo_name = params.PROJECT_NAME
-        username = api.whoami(token=HF_HUB_TOKEN)["name"]
+        repo_name = "CICIoMT2024_Attacks_Orion_v0.1.0_0x0"
+        username = "synavate"
         repo_url = f"https://huggingface.co/{username}/{repo_name}"
 
         repos = api.list_repos_objs(token=HF_HUB_TOKEN)
@@ -85,20 +85,6 @@ def upload_to_hf_hub(params, name, __VERSION__=__VERSION__):
         repo.git_push()
         logger.info("Changes committed and pushed to the repository.")
 
-        if logger.level != "DEBUG":
-            # Check for datasets that start with "final_v1*"
-            dataset_paths = list(Path("data/dataset/final").glob("final_v1*"))
-            if dataset_paths:
-                logger.info("Found dataset files starting with 'final_v1*'. Creating DatasetDict.")
-                dataset_dict = DatasetDict({
-                    "train": Dataset.from_csv(str(dataset_paths[0])),
-                    "test": Dataset.from_csv(str(dataset_paths[1])) if len(dataset_paths) > 1 else None
-                })
-
-                # Upload the dataset to the hub
-                dataset_name = f"final_dataset_{__VERSION__}_infosec_logs_orion0x0"
-                dataset_dict.push_to_hub(dataset_name)
-                logger.info(f"Dataset {dataset_name} uploaded to the hub.")
 
         logger.info("Operation completed successfully.")
 

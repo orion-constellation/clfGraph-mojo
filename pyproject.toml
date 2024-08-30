@@ -11,7 +11,7 @@ repository = "https://github.com/orion-constellation/clfGraph-mojo"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-ray = "^2.34.0"
+ray = {extras = ["data", "serve", "train", "tune"], version = "^2.35.0"}
 redis = "^5.0.8"
 types-redis = "^4.6.0.20240819"
 uvicorn = "^0.30.6"
@@ -34,6 +34,10 @@ seaborn = "^0.13.2"
 uuid = "^1.30"
 gensim = "^4.3.3"
 nltk = "^3.9.1"
+rustworkx = "^0.15.1"
+dask = {extras = ["dataframe"], version = "^2024.7.1"}
+dask-cuda = "^24.8.2"
+accelerate = "^0.33.0"
 
 
 
@@ -53,8 +57,9 @@ huggingface-hub = "^0.24.6"
 joblib = "^1.4.2"
 datasets = "^2.21.0"
 modin = "^0.31.0"
-dask = "^2024.8.1"
+dask = "^2024.7.1"
 bokeh = "^3.5.2"
+distributed = "^2024.7.1"
 
 [build-system]
 requires = ["poetry-core"]
